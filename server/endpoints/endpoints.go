@@ -3,7 +3,6 @@ package endpoints
 import (
 	"io"
 	"log"
-	"regexp"
 
 	m "github.com/amina-b/gRPC-basic/models"
 )
@@ -43,7 +42,20 @@ func (s Server) ValidateUsers(stream m.UsersService_ValidateUsersServer) error {
 
 }
 
-func isEmailValid(e string) bool {
-	emailRegex := regexp.MustCompile(`^[a-z0-9._%+\-]+@[a-z0-9.\-]+\.[a-z]{2,4}$`)
-	return emailRegex.MatchString(e)
+func (s Server) GetCourses(req *m.UserRequest, us m.UsersService_GetCoursesServer) error {
+
+	courses := []string{"Math", "English", "History", "Chemistry"}
+
+	for _, course := range courses {
+
+		err := us.Send(&m.UserCourse{Course: course})
+
+		if err != nil {
+			log.Printf("Failed to send course. Error: %v", err)
+			return err
+		}
+	}
+
+	return nil
+
 }

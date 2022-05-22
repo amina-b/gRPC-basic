@@ -5,6 +5,7 @@ option go_package="github.com/amina-b/gRPC-basic/models";
 
 service UsersService {
   rpc ValidateUsers (stream UserRequest) returns (UserResponse) {}
+  rpc GetCourses(UserRequest) returns (stream UserCourse) {}
 }
 
 // The request message containing the user's info
@@ -19,4 +20,7 @@ message UserResponse {
   repeated string invalidEmail = 1;
 }
 
+message UserCourse{
+  string Course = 1;
+}
  

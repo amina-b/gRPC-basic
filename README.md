@@ -24,5 +24,5 @@ Command for generating .pb.go file is:
 
 Command for generating _grpc.pb.go file is:
 
-```protoc -I $GOPATH/src --go-grpc_out=require_unimplemented_servers=false:$GOPATH/src $GOPATH/src/github.com/amina-b/gRPC-basic/models/model.proto``
+```protoc -I $GOPATH/src --go-grpc_out=require_unimplemented_servers=false:$GOPATH/src $GOPATH/src/github.com/amina-b/gRPC-basic/models/model.proto```
 

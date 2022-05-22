@@ -2,6 +2,7 @@ package main
 
 import (
 	"context"
+	"io"
 	"log"
 
 	m "github.com/amina-b/gRPC-basic/models"
@@ -20,12 +21,65 @@ func main() {
 
 	defer conn.Close()
 
+	// ValidateEmail function is example of client streaming
+	err = ValidateEmail(conn)
+
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	// GetCourses function is example of server streaming
+	err = GetCourses(conn)
+
+	if err != nil {
+		log.Fatal(err)
+	}
+
+}
+
+func GetCourses(conn *g.ClientConn) error {
+	user := PopulateUsers()[0]
+
+	usersClient := m.NewUsersServiceClient(conn)
+
+	resp, err := usersClient.GetCourses(context.Background(), user)
+
+	if err != nil {
+		log.Printf("Failed to get courses. Error :%v", err)
+		return err
+	}
+
+	courses := make([]string, 0)
+
+	for {
+		course, err := resp.Recv()
+
+		if err == io.EOF {
+			break
+		}
+
+		if err != nil {
+			log.Printf("Failed to receive courses. Error :%v", err)
+		}
+
+		courses = append(courses, course.Course)
+	}
+
+	log.Println(courses)
+
+	return nil
+
+}
+
+func ValidateEmail(conn *g.ClientConn) error {
+
 	usersClient := m.NewUsersServiceClient(conn)
 
 	stream, err := usersClient.ValidateUsers(context.Background())
 
 	if err != nil {
 		log.Println("Error while creating stream: ", err)
+		return err
 	}
 
 	requests := PopulateUsers()
@@ -35,6 +89,7 @@ func main() {
 
 		if err != nil {
 			log.Println("Error while sending stream", err)
+			return err
 		}
 	}
 
@@ -42,10 +97,12 @@ func main() {
 
 	if err != nil {
 		log.Println("Error while receiving stream", err)
+		return err
 	}
 
 	log.Println("Invalid emails are:", resp.InvalidEmail)
 
+	return nil
 }
 
 func PopulateUsers() []*m.UserRequest {

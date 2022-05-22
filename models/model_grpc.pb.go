@@ -23,6 +23,7 @@ const _ = grpc.SupportPackageIsVersion7
 // For semantics around ctx use and closing/ending streaming RPCs, please refer to https://pkg.go.dev/google.golang.org/grpc/?tab=doc#ClientConn.NewStream.
 type UsersServiceClient interface {
 	ValidateUsers(ctx context.Context, opts ...grpc.CallOption) (UsersService_ValidateUsersClient, error)
+	GetCourses(ctx context.Context, in *UserRequest, opts ...grpc.CallOption) (UsersService_GetCoursesClient, error)
 }
 
 type usersServiceClient struct {
@@ -67,11 +68,44 @@ func (x *usersServiceValidateUsersClient) CloseAndRecv() (*UserResponse, error) 
 	return m, nil
 }
 
+func (c *usersServiceClient) GetCourses(ctx context.Context, in *UserRequest, opts ...grpc.CallOption) (UsersService_GetCoursesClient, error) {
+	stream, err := c.cc.NewStream(ctx, &UsersService_ServiceDesc.Streams[1], "/UsersService/GetCourses", opts...)
+	if err != nil {
+		return nil, err
+	}
+	x := &usersServiceGetCoursesClient{stream}
+	if err := x.ClientStream.SendMsg(in); err != nil {
+		return nil, err
+	}
+	if err := x.ClientStream.CloseSend(); err != nil {
+		return nil, err
+	}
+	return x, nil
+}
+
+type UsersService_GetCoursesClient interface {
+	Recv() (*UserCourse, error)
+	grpc.ClientStream
+}
+
+type usersServiceGetCoursesClient struct {
+	grpc.ClientStream
+}
+
+func (x *usersServiceGetCoursesClient) Recv() (*UserCourse, error) {
+	m := new(UserCourse)
+	if err := x.ClientStream.RecvMsg(m); err != nil {
+		return nil, err
+	}
+	return m, nil
+}
+
 // UsersServiceServer is the server API for UsersService service.
 // All implementations should embed UnimplementedUsersServiceServer
 // for forward compatibility
 type UsersServiceServer interface {
 	ValidateUsers(UsersService_ValidateUsersServer) error
+	GetCourses(*UserRequest, UsersService_GetCoursesServer) error
 }
 
 // UnimplementedUsersServiceServer should be embedded to have forward compatible implementations.
@@ -80,6 +114,9 @@ type UnimplementedUsersServiceServer struct {
 
 func (UnimplementedUsersServiceServer) ValidateUsers(UsersService_ValidateUsersServer) error {
 	return status.Errorf(codes.Unimplemented, "method ValidateUsers not implemented")
+}
+func (UnimplementedUsersServiceServer) GetCourses(*UserRequest, UsersService_GetCoursesServer) error {
+	return status.Errorf(codes.Unimplemented, "method GetCourses not implemented")
 }
 
 // UnsafeUsersServiceServer may be embedded to opt out of forward compatibility for this service.
@@ -119,6 +156,27 @@ func (x *usersServiceValidateUsersServer) Recv() (*UserRequest, error) {
 	return m, nil
 }
 
+func _UsersService_GetCourses_Handler(srv interface{}, stream grpc.ServerStream) error {
+	m := new(UserRequest)
+	if err := stream.RecvMsg(m); err != nil {
+		return err
+	}
+	return srv.(UsersServiceServer).GetCourses(m, &usersServiceGetCoursesServer{stream})
+}
+
+type UsersService_GetCoursesServer interface {
+	Send(*UserCourse) error
+	grpc.ServerStream
+}
+
+type usersServiceGetCoursesServer struct {
+	grpc.ServerStream
+}
+
+func (x *usersServiceGetCoursesServer) Send(m *UserCourse) error {
+	return x.ServerStream.SendMsg(m)
+}
+
 // UsersService_ServiceDesc is the grpc.ServiceDesc for UsersService service.
 // It's only intended for direct use with grpc.RegisterService,
 // and not to be introspected or modified (even as a copy)
@@ -131,6 +189,11 @@ var UsersService_ServiceDesc = grpc.ServiceDesc{
 			StreamName:    "ValidateUsers",
 			Handler:       _UsersService_ValidateUsers_Handler,
 			ClientStreams: true,
+		},
+		{
+			StreamName:    "GetCourses",
+			Handler:       _UsersService_GetCourses_Handler,
+			ServerStreams: true,
 		},
 	},
 	Metadata: "github.com/amina-b/gRPC-basic/models/model.proto",
