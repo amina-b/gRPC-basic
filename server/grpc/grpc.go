@@ -27,7 +27,7 @@ func GrpcService(port, address string) error {
 
 	log.Printf("listening on port %v", port)
 
-	m.RegisterGreeterServer(grpcServer, &s)
+	m.RegisterUsersServiceServer(grpcServer, &s)
 
 	err = grpcServer.Serve(listener)
 

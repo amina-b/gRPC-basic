@@ -20,13 +20,43 @@ func main() {
 
 	defer conn.Close()
 
-	greaterClient := m.NewGreeterClient(conn)
+	usersClient := m.NewUsersServiceClient(conn)
 
-	resp, err := greaterClient.SayHello(context.Background(), &m.HelloRequest{})
+	stream, err := usersClient.ValidateUsers(context.Background())
 
 	if err != nil {
-		log.Println("err", err)
+		log.Println("Error while creating stream: ", err)
 	}
 
-	log.Println(resp)
+	requests := PopulateUsers()
+
+	for _, req := range requests {
+		err = stream.Send(req)
+
+		if err != nil {
+			log.Println("Error while sending stream", err)
+		}
+	}
+
+	resp, err := stream.CloseAndRecv()
+
+	if err != nil {
+		log.Println("Error while receiving stream", err)
+	}
+
+	log.Println("Invalid emails are:", resp.InvalidEmail)
+
+}
+
+func PopulateUsers() []*m.UserRequest {
+	requests := []*m.UserRequest{
+		{Id: 1, Name: "example 1", Email: "example1@gmail.com"},
+		{Id: 2, Name: "example 2", Email: "example2@gmail.com"},
+		{Id: 3, Name: "example 3", Email: "example"},
+		{Id: 4, Name: "example 4", Email: "example4@gmail.com"},
+		{Id: 5, Name: "example 3", Email: "example"},
+	}
+
+	return requests
+
 }
